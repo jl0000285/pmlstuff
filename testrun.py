@@ -14,9 +14,10 @@ import time
 
 
 def parsetest(): 
-    dname = '/home/o-4/Downloads/meta/pml/data/init/adult/adultsmall.test'   
-    dsetA = fp.parse_file(fp.LC_SVM_B,dname, fp.TP_TRUE, .25, fp.COMMA_DL)
-    #dbasehandler.add_data(dname,dset,len(dset[0]))
+    dname = '/home/o-4/Downloads/meta/pml/data/init/adult/adultsmall.data'
+    set = fp.parser(1, dname)
+    target_input = set.convert_file()
+    output = set.write_csv(target_input)
     
 def testSubProcc():
    pwd = os.getcwd()

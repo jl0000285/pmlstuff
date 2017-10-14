@@ -48,9 +48,9 @@ class parser():
        self.test_par = test_par
        self.per = per
        self.del_type = del_type
-       self.filename = self.get_filename()
+       self.filename, self.dirpath = self.get_fileinfo()
 
-    def get_filename(self):
+    def get_fileinfo(self):
         """Parse filename from filename path
         """
         comp = re.compile(r"""
@@ -61,7 +61,9 @@ class parser():
         (\w*)  #file type
         """,re.VERBOSE)
         filename = filter(None,comp.split(self.file_path)[3])
-        return filename
+        pdb.set_trace()
+        dirpath = filter(None,comp.split(self.file_path)[0:2])[0]
+        return filename, dirpath
         
     def convert_file(self):
         """Read in target file and convert it into a form readable by a learner
@@ -153,7 +155,7 @@ class parser():
     def write_csv(self, target_input):    
         """ CSV writing handler method. 
         """
-        #Prepare target_input for writing 
+        #Prepare target_input for writing
         if self.test_par==True:
             target_input_A,target_input_B = self.__partition__(target_input, self.per)
             
@@ -230,7 +232,7 @@ class parser():
     def __write_LC_SINGLE__(self, target_input, ext_name):
         """Write target_input out in one file 
         """   
-        newfile = self.filename + ext_name
+        newfile = "{}/{}{}".format(self.dirpath,self.filename + ext_name)
         writefile = open(newfile,'wb')
         wr = csv.writer(writefile, delimiter = self.del_type)
         wr.writerows(target_input)
