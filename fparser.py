@@ -61,7 +61,6 @@ class parser():
         (\w*)  #file type
         """,re.VERBOSE)
         filename = filter(None,comp.split(self.file_path)[3])
-        pdb.set_trace()
         dirpath = filter(None,comp.split(self.file_path)[0:2])[0]
         return filename, dirpath
         
@@ -188,7 +187,10 @@ class parser():
             if self.test_par==True:
                 target_input_A = self.__mod_LC_SVM_B__(target_input_A)
                 target_input_B = self.__mod_LC_SVM_B__(target_input_B)
-            else: 
+                self.__write_LC_SEPERATE__(target_input_A)
+                self.__write_LC_SEPERATE__(target_input_B)
+            else:
+                target_input = self.__mod_LC_SVM_B__(target_input)
                 self.__write_LC_SEPERATE__(target_input)
 
         return target_input
@@ -232,7 +234,7 @@ class parser():
     def __write_LC_SINGLE__(self, target_input, ext_name):
         """Write target_input out in one file 
         """   
-        newfile = "{}/{}{}".format(self.dirpath,self.filename + ext_name)
+        newfile = "{}/{}{}".format(self.dirpath,self.filename,ext_name)
         writefile = open(newfile,'wb')
         wr = csv.writer(writefile, delimiter = self.del_type)
         wr.writerows(target_input)
@@ -248,8 +250,8 @@ class parser():
                   t_lc.append([row[end]])
                   del target_input[tc][end]    
         
-        newfile ="{}.{}".format(filename,ext)
-        newfile2 = filename +  ".plabel"
+        newfile  = "{}/{}{}".format(self.dirpath,self.filename,ext_name)
+        newfile2 = "{}/{}{}".format(self.dirpath,self.filename,'.plabel')
         w1 = open(newfile,'wb')
         w2 = open(newfile2, 'wb')
         wr1 = csv.writer(w1, delimiter = self.del_type )
@@ -267,9 +269,7 @@ class parser():
           if row != [] and row != None: 
               t_lc.append([row[end]])
         tb = list(itertools.chain.from_iterable(t_lc))
-        tb_lc = list(set(tb))
-        #print(tb_lc)
-        #print(0 in tb_lc)
+        tb_lc = list(set(tb)
         ta_b = [1, -1]
         for inx,i in enumerate(t_lc):
           if i != [] and i != None:
@@ -277,14 +277,11 @@ class parser():
                 target_input[inx][end] = ta_b[ind]
         return(target_input)
 
-    def __mod_LC_SVM_A__(self, target_input): 
+    def __mod_LC_SVM_C__(self, target_input): 
         """Write svm a format on last column
         """  #.svm format   
-        newfile = file_path + ".svm"
-        w1 = open(newfile,'wb')
         t_lc = []
         end = len(target_input[0]) - 1
-        tc = 0
         for tc, row in enumerate(target_input):
            if row != [] and row != None: 
               t_lc.append([row[end]])
@@ -296,17 +293,13 @@ class parser():
         for tc, row in enumerate(target_input):
            if row != [] and row != None: 
               target_input[tc].insert(0,str(t_lc[tc][0]))
-           
-        wr1 = csv.writer(w1, delimiter = self.del_type)
-        wr1.writerows(target_input)
         return (target_input)
-      
-      
-      #.svm format with -1 +1 binary labels
-      # sending files that are not two class will result in an out 
-      # of bounds error with t_lb
+
+    
     def __mod_LC_SVM_B__(self, target_input):
-        """SVM two class labeling, +1 and -1 as floats  
+        """.svm format with -1 +1 binary labels
+           sending files that are not two class will result in an out 
+           of bounds error with t_lb  
         """
         t_lc = []
         end = len(target_input[0])-1 
@@ -314,42 +307,19 @@ class parser():
         for i in target_input:
           if i != [] and i != None: 
               t_lc.append([i[end]])
-          tc = tc + 1
-        print(len(t_lc))    
-          
+          tc = tc + 1  
         tb = list(itertools.chain.from_iterable(t_lc))
         tb_lc = list(set(tb))
-        #print(tb_lc)
-        #print(0 in tb_lc)
         ta_b = [1.0, -1.0]
         c = 0
         t_lb = []
-        print(len(t_lc))
         for c, i in enumerate(t_lc):
           if i != [] and i != None:
-                #t_lc[c] = tb_lc.index(t_lc[c])
                 ind = tb_lc.index(i[0])
                 target_input[tc][end] = ta_b[ind] 
       
         for i in target_input:
-          #try:
-              #curr1 = target_input[tc]
-              #curr2 = t_lb[tc][0]
               if i != [] and i != None: 
                   target_input[tc].insert(0,str(t_lb[tc][0]))
-          #except:
-              #print(prev1)
-              #print (prev2)
-              #print (curr1)
-              #print (curr2)
-              
-              #prev1 = curr1
-              #prev2 = curr2
               tc = tc + 1
         return (target_input)
-
-    
-  
-    
-    #subprocess.call(["./bal_con"])
-      
