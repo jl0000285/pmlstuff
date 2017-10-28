@@ -25,6 +25,7 @@ class parser():
     LC_SEPERATE=2
     LC_SVM_A=3
     LC_SVM_B=4
+    LC_SVM_C = 5
     LC_FILE_NAMES=[]
     TP_TRUE = True     
 
@@ -177,23 +178,33 @@ class parser():
             if self.test_par==True:
                 target_input_A = self.__mod_LC_SVM_A__(target_input_A)
                 target_input_B = self.__mod_LC_SVM_A__(target_input_B)
-                self.__write_LC_SEPERATE__(target_input_A)
-                self.__write_LC_SEPERATE__(target_input_B)
+                self.__write_LC_SEPERATE__(target_input_A, '.svmAtrain')
+                self.__write_LC_SEPERATE__(target_input_B, '.svmAtest')
             else:
                 target_input = self.__mod_LC_SVM_A__(target_input)
-                self.__write_LC_SEPERATE__(target_input)
+                self.__write_LC_SEPERATE__(target_input, '.svmAall')
                 
         if(self.last_column == parser.LC_SVM_B):
             if self.test_par==True:
                 target_input_A = self.__mod_LC_SVM_B__(target_input_A)
                 target_input_B = self.__mod_LC_SVM_B__(target_input_B)
-                self.__write_LC_SEPERATE__(target_input_A)
-                self.__write_LC_SEPERATE__(target_input_B)
+                self.__write_LC_SEPERATE__(target_input_A, '.svmBtrain')
+                self.__write_LC_SEPERATE__(target_input_B, '.svmBtest')
             else:
                 target_input = self.__mod_LC_SVM_B__(target_input)
-                self.__write_LC_SEPERATE__(target_input)
-
+                self.__write_LC_SEPERATE__(target_input, '.svmBall')
+        
+        if(self.last_column == parser.LC_SVM_C):
+            if self.test_par==True:
+                target_input_A = self.__mod_LC_SVM_C__(target_input_A)
+                target_input_B = self.__mod_LC_SVM_C__(target_input_B)
+                self.__write_LC_SEPERATE__(target_input_A, '.svmCtrain')
+                self.__write_LC_SEPERATE__(target_input_B, '.svmCtest')
+            else:
+                target_input = self.__mod_LC_SVM_C__(target_input)
+                self.__write_LC_SEPERATE__(target_input, '.svmCall')
         return target_input
+    
     #Static parse, 1 to 1 translation      
 
     def __partition__(target_input, per):
@@ -269,7 +280,7 @@ class parser():
           if row != [] and row != None: 
               t_lc.append([row[end]])
         tb = list(itertools.chain.from_iterable(t_lc))
-        tb_lc = list(set(tb)
+        tb_lc = list(set(tb))
         ta_b = [1, -1]
         for inx,i in enumerate(t_lc):
           if i != [] and i != None:
@@ -277,6 +288,25 @@ class parser():
                 target_input[inx][end] = ta_b[ind]
         return(target_input)
 
+    def __mod_LC_SVM_B__(self, target_input):
+        """.svm format with -1 +1 binary labels
+           sending files that are not two class will result in an out 
+           of bounds error with t_lb  
+        """
+        t_lc = []
+        end = len(target_input[0])-1 
+        for i in target_input:
+          if i != [] and i != None: 
+              t_lc.append([i[end]])
+        tb = list(itertools.chain.from_iterable(t_lc))
+        tb_lc = list(set(tb))
+        ta_b = [1.0, -1.0]
+        for c, i in enumerate(t_lc):
+          if i != [] and i != None:
+                ind = tb_lc.index(i[0])
+                target_input[c][end] = ta_b[ind] 
+        return (target_input)
+    
     def __mod_LC_SVM_C__(self, target_input): 
         """Write svm a format on last column
         """  #.svm format   
@@ -296,30 +326,4 @@ class parser():
         return (target_input)
 
     
-    def __mod_LC_SVM_B__(self, target_input):
-        """.svm format with -1 +1 binary labels
-           sending files that are not two class will result in an out 
-           of bounds error with t_lb  
-        """
-        t_lc = []
-        end = len(target_input[0])-1 
-        tc = 0
-        for i in target_input:
-          if i != [] and i != None: 
-              t_lc.append([i[end]])
-          tc = tc + 1  
-        tb = list(itertools.chain.from_iterable(t_lc))
-        tb_lc = list(set(tb))
-        ta_b = [1.0, -1.0]
-        c = 0
-        t_lb = []
-        for c, i in enumerate(t_lc):
-          if i != [] and i != None:
-                ind = tb_lc.index(i[0])
-                target_input[tc][end] = ta_b[ind] 
-      
-        for i in target_input:
-              if i != [] and i != None: 
-                  target_input[tc].insert(0,str(t_lb[tc][0]))
-              tc = tc + 1
-        return (target_input)
+    
