@@ -274,11 +274,7 @@ class parser():
     def __mod_LC_SVM_A__(self, target_input):    
         """Write svm with two class labeling, -1 and +1
         """
-        t_lc = []
-        end = len(target_input[0]) - 1
-        for tc, row in enumerate(target_input):
-          if row != [] and row != None: 
-              t_lc.append([row[end]])
+        t_lc = [item[len(item)-1] for item in target_input]
         tb = list(itertools.chain.from_iterable(t_lc))
         tb_lc = list(set(tb))
         ta_b = [1, -1]
@@ -293,11 +289,7 @@ class parser():
            sending files that are not two class will result in an out 
            of bounds error with t_lb  
         """
-        t_lc = []
-        end = len(target_input[0])-1 
-        for i in target_input:
-          if i != [] and i != None: 
-              t_lc.append([i[end]])
+        t_lc = [item[len(item)-1] for item in target_input]
         tb = list(itertools.chain.from_iterable(t_lc))
         tb_lc = list(set(tb))
         ta_b = [1.0, -1.0]
