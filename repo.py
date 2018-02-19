@@ -14,7 +14,7 @@ Base = declarative_base(metadata=metadata)
 
 class data_set(Base):
     __tablename__ = 'dataset'
-    
+
     data_name = Column(String)
     data_id = Column(Integer, primary_key = True)
     weighted_mean = Column(Float)
@@ -22,34 +22,34 @@ class data_set(Base):
     fpskew = Column(Float)
     kurtosis = Column(Float)
     information = Column(Float)
-    
-    def __repr__(self): 
+
+    def __repr__(self):
         return '<data_set(name= {}, weighted_mean= {}, standard_deviation= {}, fpskew= {}, kurtosis= {}, .\
                 information= {})>'.format(self.name,self.weighted_mean,self.standard_deviation,self.fpskew,self.kurtosis,self.information)
-                
+
 class alg_class(Base):
     __tablename__= 'alg_class'
-    
+
     class_name = Column(String)
     class_id = Column(Integer, primary_key = True)
 
     def __repr__(self):
         return '<alg_class(id={}, name={})>'.format(self.class_id,self.class_name)
-    
+
 class algorithm(Base):
     __tablename__= 'algorithm'
-    
+
     alg_name = Column(String)
     alg_path = Column(String)
     alg_id = Column(Integer, primary_key = True)
     class_id = Column(Integer, ForeignKey('alg_class.class_id'))
-    
+
     def __repr__(self):
         return '<algorithm(alg_id={}, name={}, path={}, class_id={})>'.format(self.alg_id,self.alg_name,self.alg_path,self.class_id)
-    
+
 class run(Base):
     __tablename__= 'run'
-    
+
     data_id = Column(Integer, ForeignKey('dataset.data_id'))
     alg_id = Column(Integer, ForeignKey('algorithm.alg_id'))
     run_id = Column(Integer, primary_key = True)
@@ -57,7 +57,7 @@ class run(Base):
     accuracy = Column(Float)
     alg = relationship("algorithm",backref="run")
     data = relationship("data",backref="run")
-    
+
     def __repr__(self):
         return '<run(run_id={},alg_name={},data_name={},train_time={},accuracy={})>'.format(self.run_id,self.alg.alg_name,self.data.data_name,self.train_time,self.accuracy)
 
@@ -67,12 +67,12 @@ def get_session():
     Session=sessionmaker(bind=engine)
     session=Session()
     return session
-        
+
 
 def dbInit(passw='Welcome07'):
-    #Populate database with initial information 
+    #Populate database with initial information
     pass
-                    
+
 def data_init(session):
     for dirpath,dirname,filelist in os.walk('./data/init'):
         for filename in filelist:
@@ -85,7 +85,7 @@ def data_init(session):
 def alg_class_init(session):
     class_A = alg_class(class_name='supervised')
     session.add(class_A)
-    session.commit()    
+    session.commit()
 
 def algorithms_init(session):
     algTypes= {
@@ -93,19 +93,19 @@ def algorithms_init(session):
               }
     for dirpath,dirname,filelist in os.walk('./seq'):
         for filename in filelist:
-            if(re.search(r".*[-]train",filename)):   
+            if(re.search(r".*[-]train",filename)):
                 algname=filter(None,re.split(r"(.*)([-]train)",filename))[0]
                 algpath='{}/{}'.format(dirpath,filename)
-                session.add(algorithm(alg_name=algname,alg_path=algpath))           
-    session.commit()        
-    
+                session.add(algorithm(alg_name=algname,alg_path=algpath))
+    session.commit()
+
 def run_init(session):
     pass
 
 def craftSystem():
-    import create_db as cdb    
+    import create_db as cdb
     cdb.create_tables(metadata)
-    
+
 def add_dset(dname, dset, nc, session):
     dwmean,ds_dev,dpskew,dkurt = mc.extractFeatures(dset,nc)
     minfo = 0
@@ -123,7 +123,7 @@ def add_run():
      '''
      pwd = os.getcwd()
      os.chdir(dirpath2+'/models')
-     #Training time of the initial classisfication 
+     #Training time of the initial classisfication
      t0 = time.clock()
      subprocess.call(["./" + filename2 + " " + dpath ])
      ptime = time.clock()-t0
@@ -136,4 +136,4 @@ def add_run():
      x=re.split(pattern,results)
      os.chdir(pwd)
      '''
-     pass    
+     pass

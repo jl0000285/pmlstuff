@@ -8,11 +8,11 @@ Created on Tue Oct 18 22:44:00 2016
 from __future__ import print_function
 import dbasehandler as dbh
 import mysql.connector
-import metaCollector as mc 
+import metaCollector as mc
 import os
 import fparser as fp
-import re 
-import time 
+import re
+import time
 import subprocess
 from mysql.connector import errorcode
 
@@ -20,7 +20,7 @@ from mysql.connector import errorcode
 def main():
      #cnx = mysql.connector.connect(user='root', password='Welcome07')
      pass
- 
+
 def dbInit(passw='Welcome07'):
     for dirpath,dirname,filename in os.walk('./data/init'):
         if(re.search(r".*[.]data",filename)):
@@ -35,7 +35,7 @@ def dbInit(passw='Welcome07'):
                         clfnames=re.split("[-]",filename2)
                         pwd = os.getcwd()
                         os.chdir(dirpath2+'/models')
-                        #Training time of the initial classisfication 
+                        #Training time of the initial classisfication
                         t0 = time.clock()
                         subprocess.call(["./" + filename2 + " " + dpath ])
                         ptime = time.clock()-t0
@@ -47,18 +47,16 @@ def dbInit(passw='Welcome07'):
                         pattern=r"(.*[aA]ccuracy\s*=\s*)(\d*[.]\d*)"
                         x=re.split(pattern,results)
                         os.chdir(pwd)
-                    except Exception: 
+                    except Exception:
                         pass
-                    
-                                        
-                    
-def craftSystem(passw='Welcome07'):
-    cnx = mysql.connector.connect(user='root', password=passw)
+
+def craftSystem(user='', password=''):
+    cnx = mysql.connector.connect(user=user, password=password)
     cursor = cnx.cursor()
     DB_NAME = 'METABASE'
-    dbh.create_database(cnx, cursor, DB_NAME)    
-    TABLES={} 
-    
+    dbh.create_database(cnx, cursor, DB_NAME)
+    TABLES={}
+
     TABLES['data_sets']=(
     "CREATE TABLE 'data_sets'("
     " 'name' varchar(16) NOT NULL,"
@@ -77,32 +75,32 @@ def craftSystem(passw='Welcome07'):
     " 'class_id' int(11) NOT NULL,"
     " PRIMARY KEY ('class_id')"
     ") ENGINE=InnoDB")
-    
-    
+
+
     TABLES['algorithms']=(
     "CREATE TABLE 'algorithms'("
     "alg_name varchar(16) NOT NULL"
     "alg_id int(11) NOT NULL"
     "class_id int(11) NOT NULL"
     "PRIMARY KEY ('alg_id')"
-    "FOREIGN KEY (class_id)"   
+    "FOREIGN KEY (class_id)"
     "    REFERENCES alg_class(class_id)"
-    ") ENGINE=InnoDB") 
-    
+    ") ENGINE=InnoDB")
+
     TABLES['runs']=(
     "CREATE TABLE 'runs'("
     "data_id int(11) NOT NULL"
     "alg_id int(11) NOT NULL"
     "run_id int(11) NOT NULL"
     "train_time float(11)"
-    "accuracy float(11)"    
+    "accuracy float(11)"
     "PRIMARY KEY ('run_id')"
     "FOREIGN KEY (data_id)"
     "    REFERENCES data_sets(data_id)"
     "FOREIGN KEY (alg_id)"
     "    REFERENCES algorithms(alg_id)"
     ") ENGINE=InnoDB")
-    
+
     create_tables(cursor, TABLES)
     cursor.close()
     cnx.close()
@@ -117,7 +115,7 @@ def connect(passw):
 def add_run():
     pass
 
-# Adds record to the "data set" table 
+# Adds record to the "data set" table
 def add_dset(dname, dset, nc, passw):
     dwmean,ds_dev,dpskew,dkurt = mc.extractFeatures(dset,nc)
     minfo = 0
@@ -132,7 +130,7 @@ def add_dset(dname, dset, nc, passw):
         'standard_deviation' : float(ds),
         'fpskew' : float(dp),
         'kurtosis' : float(dk),
-        'information' : float(minfo),     
+        'information' : float(minfo),
     }
     cursor.execute(add_drec, data_dset)
     cnx.commit()
@@ -145,13 +143,13 @@ def pop_alg():
     cnx, cursor = dbasehandler.connect()
     for root, dirs in os.walk('/seq'):
         algs = algs+dirs
-    
-    
+
+
     add_libsvm=("INSERT INTO algorithms"
-               "(alg_name, alg_id, class_id)"   
-               "VALUES (%(alg_name)s, %(alg_id)s, %(class_id)s)")    
-    
-    
+               "(alg_name, alg_id, class_id)"
+               "VALUES (%(alg_name)s, %(alg_id)s, %(class_id)s)")
+
+
 
 # Adds record to the "algorithms" class
 def add_algClass():
@@ -163,18 +161,18 @@ def create_database(cnx,cursor,DB_NAME):
             "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(DB_NAME))
     except mysql.connector.Error as err:
         print("Failed creating database: {}".format(err))
-    
-    
+
+
 def swap_database(cnx,cursor,DB_NAME):
     try:
-        cnx.database = DB_NAME  
+        cnx.database = DB_NAME
     except mysql.connector.Error as err:
             if err.errno == errorcode.ER_BAD_DB_ERROR:
                create_database(cursor)
                cnx.database = DB_NAME
             else:
                print(err)
-                
+
 def create_tables(cursor, TABLES):
     for name, ddl in TABLES.iteritems():
         try:
@@ -188,13 +186,13 @@ def create_tables(cursor, TABLES):
         else:
             print("OK")
 
-#Populate database with initial data sets 
+#Populate database with initial data sets
 def initPopDB():
     pass
 
 
-def print_databases(): 
-    cnx = mysql.connector.connect(user='root', password='Welcome07', host='127.0.0.1')  
+def print_databases():
+    cnx = mysql.connector.connect(user='root', password='Welcome07', host='127.0.0.1')
     cursor = cnx.cursor()
     cursor.execute('show databases')
     for i in cursor:
