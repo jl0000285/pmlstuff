@@ -16,6 +16,16 @@ import fparser as fp
 import re
 import pdb
 
+COMMA_DL=0
+SPACE_DL=1
+LC_SINGLE=1
+LC_SEPERATE=2
+LC_SVM_A=3
+LC_SVM_B=4
+LC_SVM_C = 5
+LC_FILE_NAMES=[]
+TP_TRUE = True
+TP_FALSE = False
 
 class parser():
     """Parser class"""
@@ -28,6 +38,7 @@ class parser():
     LC_SVM_C = 5
     LC_FILE_NAMES=[]
     TP_TRUE = True
+    TP_FALSE = False
 
     def __init__(self,last_column, file_path, test_par=False, per=0, del_type=' '):
        """Create Parser object for given file_path

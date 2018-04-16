@@ -10,11 +10,9 @@ import re
 import subprocess
 import os
 import time
-import sk_handler as skh
-#import dbasehandler
-
 
 def parsetest(parseOption):
+    import sk_handler as skh
     """
     ParseOptions:
     -------------
@@ -36,6 +34,12 @@ def parsetest(parseOption):
     duration, acc = sk.svm()
     dur2, acc2 = sk.clustering()
     pdb.set_trace()
+
+def testdatabasehandler():
+    import dbasehandler as dbh
+    dbh.craftSystem()
+    dbh.dbInit()
+
 
 def testSubProcc():
    pwd = os.getcwd()

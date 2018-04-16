@@ -9,4 +9,3 @@ import dbasehandler as dbh
 
 def popdatabase():
     dbh.craftSystem('Welcome07')
-    

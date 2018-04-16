@@ -15,181 +15,69 @@ import re
 import time
 import subprocess
 from mysql.connector import errorcode
+import repo
+import pdb
 
+def dbInit():
+    repo.craftSystem()
+    session = repo.get_session()
+    print("Performing data init")
+    dbh.data_init(session)
+    print("Performing Alg Class Init")
+    dbh.alg_class_init(session)
+    print("Perfomring Algorithms init")
+    dbh.algorithms_init(session)
+    print("Performing Runs init")
+    dbh.run_init(session)
 
-def main():
-     #cnx = mysql.connector.connect(user='root', password='Welcome07')
-     pass
+def data_init(session):
+    for dirpath,dirname,filelist in os.walk('./data/init'):
+        for filename in filelist:
+            if(re.search(r".*[.]data",filename)):
+                print ("dirpath: {}, dirname: {}, filename: {}"
+                       .format(dirpath,dirname,filename))
+                dpath = '{}/{}'.format(dirpath,filename)
+                data = fp.parser(fp.LC_SINGLE,dpath,False,0)
+                full_set = data.convert_file()
+                repo.add_dset(filename, dpath, full_set, len(full_set[0]),session)
 
-def dbInit(passw='Welcome07'):
-    for dirpath,dirname,filename in os.walk('./data/init'):
-        if(re.search(r".*[.]data",filename)):
-            dnames=re.split("[.]",filename)
-            dpath = dirpath+filename
-            dsetA, dsetB = fp.parse_file(fp.LC_SVM_B,dpath, fp.TP_TRUE, .25, fp.COMMA_DL)
-            dbh.add_dset(filename, dsetA, len(dsetA[0]),passw)
-            for dirpath2,dirname2,filename2 in os.walk('./seq'):
-                if(re.search(r".*train",filename2)):
-                    try:
-                        #split classifier leximes
-                        clfnames=re.split("[-]",filename2)
-                        pwd = os.getcwd()
-                        os.chdir(dirpath2+'/models')
-                        #Training time of the initial classisfication
-                        t0 = time.clock()
-                        subprocess.call(["./" + filename2 + " " + dpath ])
-                        ptime = time.clock()-t0
-                        predictor = "../{0}-predict".format(clfnames[0])
-                        testfile = dirpath + dnames[0] + ".test"
-                        modelfile = filename + ".model"
-                        outputfile = filename + ".output"
-                        results=subprocess.check_call("{0} {1} {2} {3}".format(predictor, testfile, modelfile, outputfile), shell=True)
-                        pattern=r"(.*[aA]ccuracy\s*=\s*)(\d*[.]\d*)"
-                        x=re.split(pattern,results)
-                        os.chdir(pwd)
-                    except Exception:
-                        pass
+def alg_class_init(session):
+    class_A = repo.alg_class(class_name='supervised')
+    session.add(class_A)
+    session.commit()
 
-def craftSystem(user='', password=''):
-    cnx = mysql.connector.connect(user=user, password=password)
-    cursor = cnx.cursor()
-    DB_NAME = 'METABASE'
-    dbh.create_database(cnx, cursor, DB_NAME)
-    TABLES={}
+def algorithms_init(session):
+    algTypes= {
+              'svm':('sk.svm','supervised'),
+              'clustering':('sk.clustering','supervised'),
+              'neural_network':('sk.neural_network','supervised'),
+              'bayes':('sk.bayes','supervised'),
+              'regression':('sk.regression','supervised')
+              }
+    for key in algTypes:
+        class_id = session.query(repo.alg_class).\
+            filter_by(class_name=algTypes[key][1]).first()
+        class_id = class_id.class_id
+        repo.add_alg(key,algTypes[key][0],class_id,session)
 
-    TABLES['data_sets']=(
-    "CREATE TABLE 'data_sets'("
-    " 'name' varchar(16) NOT NULL,"
-    " 'data_id' int(11) NOT NULL,"
-    " 'weighted_mean' float(11),"
-    " 'standard_deviation' float(11),"
-    " 'fpskew' float(11),"
-    " 'kurtosis' float(11),"
-    " 'information' float(11),"
-    " PRIMARY KEY ('data_id')"
-     ") ENGINE=InnoDB")
-
-    TABLES['alg_class']=(
-    "CREATE TABLE 'alg_class'("
-    " 'name' varchar(16) NOT NULL,"
-    " 'class_id' int(11) NOT NULL,"
-    " PRIMARY KEY ('class_id')"
-    ") ENGINE=InnoDB")
-
-
-    TABLES['algorithms']=(
-    "CREATE TABLE 'algorithms'("
-    "alg_name varchar(16) NOT NULL"
-    "alg_id int(11) NOT NULL"
-    "class_id int(11) NOT NULL"
-    "PRIMARY KEY ('alg_id')"
-    "FOREIGN KEY (class_id)"
-    "    REFERENCES alg_class(class_id)"
-    ") ENGINE=InnoDB")
-
-    TABLES['runs']=(
-    "CREATE TABLE 'runs'("
-    "data_id int(11) NOT NULL"
-    "alg_id int(11) NOT NULL"
-    "run_id int(11) NOT NULL"
-    "train_time float(11)"
-    "accuracy float(11)"
-    "PRIMARY KEY ('run_id')"
-    "FOREIGN KEY (data_id)"
-    "    REFERENCES data_sets(data_id)"
-    "FOREIGN KEY (alg_id)"
-    "    REFERENCES algorithms(alg_id)"
-    ") ENGINE=InnoDB")
-
-    create_tables(cursor, TABLES)
-    cursor.close()
-    cnx.close()
-
-def connect(passw):
-     cnx = mysql.connector.connect(user='root', password=passw)
-     cursor = cnx.cursor()
-     cursor.execute('use metabase')
-     return cnx, cursor
-
-# Adds record to the "runs" table"alg_id int(11) NOT NULL"
-def add_run():
-    pass
-
-# Adds record to the "data set" table
-def add_dset(dname, dset, nc, passw):
-    dwmean,ds_dev,dpskew,dkurt = mc.extractFeatures(dset,nc)
-    minfo = 0
-    dw,ds,dp,dk = dwmean[0], ds_dev[0], dpskew[0],dkurt[0]
-    cnx, cursor = dbh.connect(passw)
-    add_drec = ("INSERT INTO data_sets "
-               "(name, weighted_mean, standard_deviation, fpskew, kurtosis, information)"
-               "VALUES (%(name)s, %(weighted_mean)s, %(standard_deviation)s, %(fpskew)s, %(kurtosis)s, %(information)s)")
-    data_dset = {
-        'name' : dname,
-        'weighted_mean' : float(dw),
-        'standard_deviation' : float(ds),
-        'fpskew' : float(dp),
-        'kurtosis' : float(dk),
-        'information' : float(minfo),
-    }
-    cursor.execute(add_drec, data_dset)
-    cnx.commit()
-    cursor.close()
-    cnx.close()
-
-# Populates the algorithms table
-def pop_alg():
-    algs=[]
-    cnx, cursor = dbasehandler.connect()
-    for root, dirs in os.walk('/seq'):
-        algs = algs+dirs
-
-
-    add_libsvm=("INSERT INTO algorithms"
-               "(alg_name, alg_id, class_id)"
-               "VALUES (%(alg_name)s, %(alg_id)s, %(class_id)s)")
-
-
-
-# Adds record to the "algorithms" class
-def add_algClass():
-    pass
-
-def create_database(cnx,cursor,DB_NAME):
-    try:
-        cursor.execute(
-            "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(DB_NAME))
-    except mysql.connector.Error as err:
-        print("Failed creating database: {}".format(err))
-
-
-def swap_database(cnx,cursor,DB_NAME):
-    try:
-        cnx.database = DB_NAME
-    except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_BAD_DB_ERROR:
-               create_database(cursor)
-               cnx.database = DB_NAME
-            else:
-               print(err)
-
-def create_tables(cursor, TABLES):
-    for name, ddl in TABLES.iteritems():
-        try:
-            print("Creating table {}: ".format(name), end='')
-            cursor.execute(ddl)
-        except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-                print("already exists.")
-            else:
-                print(err.msg)
-        else:
-            print("OK")
-
-#Populate database with initial data sets
-def initPopDB():
-    pass
-
+def run_init(session):
+    import sk_handler as skh
+    d_sets = session.query(repo.data_set).all()
+    algs = session.query(repo.algorithm).all()
+    for d_set in d_sets:
+        data_id = d_set.data_id
+        data = fp.parser(fp.COMMA_DL,d_set.data_path,
+                         fp.TP_TRUE,per=.25)
+        target_input = data.convert_file()
+        train_data,test_data = data.write_csv(target_input)
+        X_train,y_train = data.split_last_column(train_data)
+        X_test,y_test = data.split_last_column(test_data)
+        sk = skh.sk_handler(X_train,y_train,X_test,y_test)
+        for alg  in algs:
+            alg_id = alg.alg_id
+            evstring = '{}()'.format(alg.alg_path)
+            durr,acc = eval(evstring)
+            repo.add_run(data_id,alg_id,durr,acc,session)
 
 def print_databases():
     cnx = mysql.connector.connect(user='root', password='Welcome07', host='127.0.0.1')
